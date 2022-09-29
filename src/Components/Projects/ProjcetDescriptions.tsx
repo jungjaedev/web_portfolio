@@ -33,7 +33,11 @@ const Wrapper = styled.div`
 `
 
 const Description = styled.div`
-  line-height: 1.3rem;
+  line-height: 1.7rem;
+
+  @media screen and (max-width: 768px) {
+    line-height: 1.3rem;
+  }
 `
 
 const Line = styled.div`
