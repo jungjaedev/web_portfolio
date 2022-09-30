@@ -1,31 +1,49 @@
-name: Deployment
+name: Deploy React with Github Actions
+
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
+
+# Allow one concurrent deployment
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  # Build job
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@master
-
-      - name: Set up Node
-        uses: actions/setup-node@master
+      - uses: actions/checkout@v3
+      - uses: actions/configure-pages@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
+          # cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build
-        run: npm run build
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build
         env:
           CI: false
-          NODE_ENV: production
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          github_token: ${{ secrets.MYGITTOKEN }}
-          publish_dir: ./build
+          path: 'build/'
+
+  # Deploy job
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
